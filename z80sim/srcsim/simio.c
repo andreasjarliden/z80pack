@@ -43,6 +43,9 @@ static BYTE hwctl_in(void);
 static void p001_out(BYTE data), p254_out(BYTE data);
 static void hwctl_out(BYTE data), fp_out(BYTE data);
 
+static void pPioADataOut(BYTE data);
+static BYTE pPioADataIn();
+
 static BYTE hwctl_lock = 0xff;	/* lock status hardware control port */
 static BYTE sio_last;		/* last byte read from sio */
 static BYTE fp_value;		/* port 255 value, can be set with p command */
@@ -52,7 +55,7 @@ static BYTE fp_value;		/* port 255 value, can be set with p command */
  *	I/O port (0 - 255), to do the required I/O.
  */
 in_func_t *const port_in[256] = {
-	[  0] = p000_in,
+	[  0] = pPioADataIn,
 	[  1] = p001_in,
 	[160] = hwctl_in,	/* virtual hardware control */
 	[254] = p255_in,	/* mirror of port 255 */
@@ -64,6 +67,7 @@ in_func_t *const port_in[256] = {
  *	I/O port (0 - 255), to do the required I/O.
  */
 out_func_t *const port_out[256] = {
+	[  0] = pPioADataOut,
 	[  1] = p001_out,
 	[160] = hwctl_out,	/* virtual hardware control */
 	[254] = p254_out,	/* write to front panel switches */
@@ -118,6 +122,10 @@ static BYTE p000_in(void)
 	return tty_stat;
 }
 
+static BYTE pPioADataIn(void) {
+	return p000_in();
+}
+
 /*
  *	I/O function port 1 read:
  *	Read next byte from stdin.
@@ -154,6 +162,12 @@ static BYTE hwctl_in(void)
 static BYTE p255_in(void)
 {
 	return fp_value;
+}
+
+static void pPioADataOut(BYTE data)
+{
+	putchar((int) data);
+	fflush(stdout);
 }
 
 /*
